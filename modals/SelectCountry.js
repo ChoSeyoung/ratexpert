@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
         paddingVertical: 16
     },
     modalTitle: {
-        fontSize: 26,
+        fontSize: 18,
         fontWeight: 'bold'
     }
 });

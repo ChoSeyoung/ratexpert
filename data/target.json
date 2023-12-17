@@ -1,0 +1,18 @@
+{
+  "USD": {
+    "isoCode" : "USD",
+    "countryName" : "미국",
+    "currencyName" : "달러"
+
+  },
+  "JPY": {
+    "isoCode" : "JPY",
+    "countryName" : "일본",
+    "currencyName" : "엔"
+  },
+  "EUR": {
+    "isoCode" : "EUR",
+    "countryName" : "유럽연합",
+    "currencyName" : "유로"
+  }
+}

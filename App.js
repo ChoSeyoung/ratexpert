@@ -1,18 +1,42 @@
-import React, {useState, useRef} from 'react';
-import {View, Modal, Button, Animated, SafeAreaView, StyleSheet, Text, Image, TextInput} from 'react-native';
+import React, {useState, useRef, useEffect} from 'react';
+import {View, Modal, Button, Animated, SafeAreaView, StyleSheet, Text, Image, TextInput, FlatList} from 'react-native';
 import {StatusBar} from "expo-status-bar";
 import SelectCountry from "./modals/SelectCountry";
 import KoreaFlag from './assets/flags/korea.svg';
 import JapanFlag from './assets/flags/japan.svg';
 import UsaFlag from './assets/flags/usa.svg';
+import EurFlag from './assets/flags/eu.svg';
 import HorizontalLine from "./components/HorizontalLine";
+import target from './data/target.json';
+import AppLoading from 'expo-app-loading';
+import {useFonts, Silkscreen_400Regular, Silkscreen_700Bold} from '@expo-google-fonts/silkscreen';
 
 const App = () => {
+    let [fontsLoaded] = useFonts({
+        Silkscreen_400Regular,
+        Silkscreen_700Bold,
+    });
+
+    const [data, setData] = useState([]);
+
+    useEffect(() => {
+        // JSON 객체를 배열로 변환
+        const dataArray = Object.entries(target).map(([key, value]) => {
+            return {
+                key: key,
+                isoCode: value.isoCode,
+                countryName: value.countryName,
+                currencyName: value.currencyName,
+            };
+        });
+        setData(dataArray);
+    }, []);
 
     // 입력된 금액
     const [values, setValues] = useState({
         base: '1,000',
-        input1: '108.71'
+        JPY: '108.71',
+        USD: '0.77',
     });
 
     // 금액 변경시 실행되는 함수
@@ -37,33 +61,64 @@ const App = () => {
         setModalVisible(true);
     };
 
-    const handleSelectCountryModal = (flag) => {
-        setModalVisible(flag)
+    const handleSelectCountryModal = (show) => {
+        setModalVisible(show);
     }
 
-    return (
-        <View style={{flex: 1, backgroundColor: 'black'}}>
-            <Animated.View style={{
-                flex: 1,
-                transform: [{scale: scaleValue}],
-                backgroundColor: 'white',
-                borderRadius: 16,
-                paddingTop: 50
-            }}>
-                {/* 상단 타이틀 영역*/}
-                <View style={{height: 48, justifyContent: 'center', paddingHorizontal: 16}}>
-                    <Text style={{fontSize: 24}}>RateXpert</Text>
-                </View>
-                {/*기본 환율 적용 범위*/}
-                <View style={{height: 40, paddingHorizontal: 16, marginVertical: 10}}>
-                    <View style={{flexDirection: 'row'}}>
-                        <View style={{flex: 2,}}>
+    const renderFlag = (isoCode) => {
+        if (isoCode === 'USD') {
+            return <Image source={require('./assets/flags/usa.png')} style={{width: "100%", height: "100%"}} />
+        } else if (isoCode === 'USD') {
+            return <Image source={require('./assets/flags/japan.png')} style={{width: "100%", height: "100%"}} />
+        } else if (isoCode === 'EUR') {
+            return <Image source={require('./assets/flags/eu.png')} style={{width: "100%", height: "100%"}} />
+        }
+    }
+
+    // FlatList의 항목을 렌더링하는 함수
+    const renderItem = ({item}) => (
+        <View style={styles.row}>
+            <View style={{flex: 1}}>
+                {renderFlag(item.isoCode)}
+            </View>
+            <View style={{flex: 1, justifyContent: 'center', paddingHorizontal: 16}}>
+                <Text style={styles.name}>{item.isoCode}</Text>
+            </View>
+            <View style={{flex: 5, alignItems: 'flex-end', justifyContent: 'center'}}>
+                <TextInput keyboardType="numeric"
+                           defaultValue={values[item.isoCode]}
+                           onChangeText={(text) => handleChange(text, item.isoCode)}
+                           style={styles.currency}
+                />
+            </View>
+        </View>
+    );
+
+    if (!fontsLoaded) {
+        return <AppLoading/>;
+    } else {
+        return (
+            <View style={{flex: 1, backgroundColor: 'black'}}>
+                <Animated.View style={{
+                    flex: 1,
+                    transform: [{scale: scaleValue}],
+                    backgroundColor: 'white',
+                    borderRadius: 16,
+                    paddingTop: 50
+                }}>
+                    {/* 상단 타이틀 영역*/}
+                    <View style={{height: 48, justifyContent: 'center', paddingHorizontal: 16}}>
+                        <Text style={styles.title}>RateXpert</Text>
+                    </View>
+                    {/*기본 환율 적용 범위*/}
+                    <View style={styles.row}>
+                        <View style={{flex: 2}}>
                             <KoreaFlag width="100%" height="100%"/>
                         </View>
                         <View style={{flex: 2, justifyContent: 'center', paddingHorizontal: 16}}>
-                            <Text>KOR</Text>
+                            <Text style={styles.name}>KOR</Text>
                         </View>
-                        <View style={{flex:10, alignItems: 'flex-end', justifyContent: 'center'}}>
+                        <View style={{flex: 10, alignItems: 'flex-end', justifyContent: 'center'}}>
                             <TextInput keyboardType="numeric"
                                        defaultValue={values.base}
                                        onChangeText={(text) => handleChange(text, 'base')}
@@ -71,36 +126,31 @@ const App = () => {
                             />
                         </View>
                     </View>
-                </View>
-                {/* 한화 환율 분리선 적용 */}
-                <HorizontalLine/>
-                {/* 비교 환율 영역*/}
-                <View style={{height: 40, paddingHorizontal: 16, marginVertical: 10}}>
-                    <View style={{flexDirection: 'row'}}>
-                        <View style={{flex: 2,}}>
-                            <UsaFlag width="100%" height="100%"/>
-                        </View>
-                        <View style={{flex: 2, justifyContent: 'center', paddingHorizontal: 16}}>
-                            <Text>USD</Text>
-                        </View>
-                        <View style={{flex:10, alignItems: 'flex-end', justifyContent: 'center'}}>
-                            <TextInput keyboardType="numeric"
-                                       defaultValue={values.base}
-                                       onChangeText={(text) => handleChange(text, 'base')}
-                                       style={{fontSize: 32}}
-                            />
-                        </View>
-                    </View>
-                </View>
-                <Button title="Open Modal" onPress={handleOpenModal}/>
-            </Animated.View>
+                    {/* 한화 환율 분리선 적용 */}
+                    <HorizontalLine/>
+                    <FlatList
+                        data={data}
+                        renderItem={renderItem}
+                        keyExtractor={item => item.key}
+                    />
 
-            <SelectCountry modalVisible={modalVisible} scaleValue={scaleValue}
-                           handleSelectCountryModal={handleSelectCountryModal}/>
+                    <Button title="Open Modal" onPress={handleOpenModal}/>
+                </Animated.View>
 
-            <StatusBar style="auto"/>
-        </View>
-    );
+                <SelectCountry modalVisible={modalVisible} scaleValue={scaleValue}
+                               handleSelectCountryModal={handleSelectCountryModal}/>
+
+                <StatusBar style="auto"/>
+            </View>
+        );
+    }
 };
+
+const styles = StyleSheet.create({
+    row: {height: 40, paddingHorizontal: 16, marginVertical: 10, flexDirection: 'row'},
+    title: {fontFamily: 'Silkscreen_400Regular', fontSize: 24},
+    name: {fontFamily: 'Silkscreen_400Regular', fontSize: 24},
+    currency: {fontFamily: 'Silkscreen_400Regular', fontSize: 34, width: '100%', textAlign: 'right'},
+});
 
 export default App;
